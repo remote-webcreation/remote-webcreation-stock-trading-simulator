@@ -70,6 +70,44 @@ export async function buyAsset(symbol, amount) {
     console.log(`\nBought ${amount} units of ${upperSymbol} for ${cost.toFixed(2)} €. Remaining balance: ${portfolio.balance.toFixed(2)} €.\n`);
 }
 
+export async function sellAsset(symbol, amount) {
+
+    const portfolio = await loadPortfolio();
+    const upperSymbol = symbol.toUpperCase();
+
+    // Prüfen ob das Asset im Portfolio ist
+    if (!portfolio.assets[upperSymbol] || portfolio.assets[upperSymbol] === 0) {
+        console.log(`\nYou don't own any units of ${upperSymbol}.\n`);
+        return;
+    }
+    // Prüfen ob genug Einheiten zum Verkauf vorhanden
+    if (portfolio.assets[upperSymbol] < amount) {
+        console.log(`\nInsufficient units. You only have ${portfolio.assets[upperSymbol]} units of ${upperSymbol}.\n`);
+        return;
+    }
+
+    const priceData = await getStockPriceData(upperSymbol);
+
+    if (!priceData || typeof priceData.c !== 'number') {
+        console.log(`\nCould not fetch price for ${upperSymbol}. Please try again.\n`);
+        return;
+    }
+
+    const revenue = priceData.c * amount; // Einnahmen aus Verkauf
+
+    // update credit
+    portfolio.balance += revenue;
+
+    portfolio.assets[upperSymbol] -= amount;
+    
+    if (portfolio.assets[upperSymbol] <= 0) {
+        delete portfolio.assets[upperSymbol]; // Remove asset if no units left
+    }
+
+    await savePortfolio(portfolio);
+    console.log(`\nSold ${amount} units of ${upperSymbol} for ${revenue.toFixed(2)} €. New balance: ${portfolio.balance.toFixed(2)} €.\n`);
+}
+
 
 // show PF
 export async function showPortfolio() {

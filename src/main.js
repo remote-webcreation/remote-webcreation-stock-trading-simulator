@@ -5,7 +5,7 @@ dotenv.config();
 import chalk from 'chalk';
 import { getStockPriceData } from './api.js';
 import { categories } from './symbols.js';
-import { buyAsset, showPortfolio } from './portfolio.js';
+import { buyAsset, showPortfolio, loadPortfolio, sellAsset } from './portfolio.js';
 
 async function mainMenu() {
   try {
@@ -151,8 +151,86 @@ async function mainMenu() {
         break;
 
       case 'Sell stock':
-        console.log("Feature coming soon!\n");
+        const portfolio = await loadPortfolio();
+
+        if (Object.keys(portfolio.assets || {}).length === 0) {
+          console.log('\nYour portfolio is empty. No assets to sell.\n');
+          break; 
+        }
+
+        console.log('\n--- Your Assets for Sale ---\n');
+        const sellableChoices = [];
+
+        for (const symbol in portfolio.assets) {
+          const units = portfolio.assets[symbol];
+          const priceData = await getStockPriceData(symbol);
+
+          let priceOutput = 'N/A';
+          let colorFunc = chalk.white;
+          let currentPrice = null;
+
+          if (priceData && typeof priceData.c === 'number' && typeof priceData.pc === 'number') {
+            currentPrice = priceData.c;
+            const previousClose = priceData.pc;
+            const diff = currentPrice - previousClose;
+
+            if (diff > 0) {
+              colorFunc = chalk.green;
+            } else if (diff < 0) {
+              colorFunc = chalk.red;
+            }
+            priceOutput = `$${currentPrice.toFixed(2)}`;
+          }
+
+          console.log(`- ${symbol}: ${units} units | Current Price: ${colorFunc(priceOutput)}`);
+
+          if (currentPrice !== null) {
+            sellableChoices.push({
+              name: `${symbol} (${units} units) - Sell Price: ${colorFunc(priceOutput)}`,
+              value: symbol
+            });
+          } else {
+            console.log(chalk.yellow(`  (Warning: Price for ${symbol} not available, cannot be sold currently.)`));
+          }
+        }
+        console.log('----------------------------\n');
+
+        if (sellableChoices.length === 0) {
+          console.log(chalk.red('No assets with available prices to sell.\n'));
+          break; 
+        }
+
+        const { symbol: sellChoosenSymbol } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'symbol',
+            message: 'Choose an asset to sell:',
+            choices: sellableChoices
+          }
+        ]);
+        
+        const availableUnits = portfolio.assets[sellChoosenSymbol];
+
+        const { amount: sellAmount } = await inquirer.prompt([
+          {
+            type: 'number',
+            name: 'amount',
+            message: `How many units of ${sellChoosenSymbol} do you want to sell? (You own: ${availableUnits})`,
+            validate: input => {
+              if (isNaN(input) || input <= 0) {
+                return 'Enter a positive number.';
+              }
+              if (input > availableUnits) {
+                return `You only have ${availableUnits} units of ${sellChoosenSymbol}.`;
+              }
+              return true;
+            }
+          }
+        ]);
+
+        await sellAsset(sellChoosenSymbol, sellAmount);
         break;
+
       case 'Portfolio':
         await showPortfolio();
         break;
