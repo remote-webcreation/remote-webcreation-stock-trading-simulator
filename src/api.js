@@ -1,7 +1,10 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const BASE_URL = 'https://finnhub.io/api/v1';
 const API_KEY = process.env.FINNHUB_API_KEY;
+
 
 export async function getStockPriceData(symbol) {
     try {

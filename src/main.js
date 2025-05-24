@@ -1,8 +1,7 @@
 import inquirer from 'inquirer';
 import dotenv from 'dotenv';
 dotenv.config();
-import { fetchData } from './api.js';
-fetchData();
+
 import chalk from 'chalk';
 import { getStockPriceData } from './api.js';
 import { categories } from './symbols.js';
@@ -78,7 +77,6 @@ async function mainMenu() {
         // request price
         const priceData = await getStockPriceData(finalSymbol);
 
-        console.log('API response:', priceData);
 
         if (priceData && typeof priceData.c === 'number' && typeof priceData.pc === 'number') {
             const diff = priceData.c - priceData.pc;
