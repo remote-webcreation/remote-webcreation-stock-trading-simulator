@@ -33,7 +33,7 @@ async function mainMenu() {
           {
             type: 'list',
             name: 'categoryName',
-            message: 'Choose a category:',
+            message: 'Choose a category:\n',
             choices: categories.map(cat => cat.name)
           }
         ]);
@@ -42,37 +42,37 @@ async function mainMenu() {
         const showCategory = categories.find(cat => cat.name === showCategoryName);
 
         if (!showCategory.symbols || showCategory.symbols.length === 0) {
-            console.log('\nNo symbols available in this category.\n');
-            break;
+          console.log('\nNo symbols available in this category.\n');
+          break;
         }
 
         //choose symbol
         const { symbol: showChoosenSymbol } = await inquirer.prompt([
             {
-                type: 'list',
-                name: 'symbol',
-                message: 'Choose a symbol:',
-                choices: showCategory.symbols.map(item => ({
-                    name: `${item.name}`,
-                    value: item.symbol
-                })).concat([
-                    new inquirer.Separator(),
-                    { name: 'Manuell eingeben', value: '__manual__' }
-                ])
+              type: 'list',
+              name: 'symbol',
+              message: 'Choose a symbol:',
+              choices: showCategory.symbols.map(item => ({
+                name: `${item.name}`,
+                value: item.symbol
+              })).concat([
+                new inquirer.Separator(),
+                { name: 'Manuell eingeben', value: '__manual__' }
+              ])
             }
         ]);
 
         // manual input
         let finalShowSymbol = showChoosenSymbol;
         if (showChoosenSymbol === '__manual__') {
-            const { manualSymbol } = await inquirer.prompt([
-                {
-                    type: 'input',
-                    name: 'manualSymbol',
-                    message: 'Enter stock/crypto symbol:'
-                }
-            ]);
-            finalShowSymbol = manualSymbol;
+          const { manualSymbol } = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'manualSymbol',
+              message: 'Enter stock/crypto symbol:'
+            }
+          ]);
+          finalShowSymbol = manualSymbol;
         }
 
         // request price
@@ -95,57 +95,82 @@ async function mainMenu() {
 
       case 'Buy stock':
 
-      // choose category
+        // choose category
         const { categoryName: buyCategoryName } = await inquirer.prompt([
-            {
-                type: 'list',
-                name: 'categoryName',
-                message: 'Choose a category to buy from:',
-                choices: categories.map(cat => cat.name)
-            },
+          {
+            type: 'list',
+            name: 'categoryName',
+            message: 'Choose a category to buy from:\n',
+            choices: categories.map(cat => cat.name)
+          },
         ]);
         
         const buyCategory = categories.find(cat => cat.name === buyCategoryName);
 
         if (!buyCategory.symbols || buyCategory.symbols.length === 0) {
-            console.log('\nNo symbols available in this category to buy.\n'); 
-            break; 
+          console.log('\nNo symbols available in this category to buy.\n'); 
+          break; 
         }
 
         const { symbol: buyChoosenSymbol } = await inquirer.prompt([ 
-            {
-                type: 'list',
-                name: 'symbol',
-                message: 'Choose a symbol to buy:', 
-                choices: buyCategory.symbols.map(item => ({
-                    name: `${item.name}`,
-                    value: item.symbol
-                })).concat([
-                    new inquirer.Separator(),
-                    { name: 'Enter manually', value: '__manual__' } 
-                ])
-            }
+          {
+            type: 'list',
+            name: 'symbol',
+            message: 'Choose a symbol to buy:', 
+            choices: buyCategory.symbols.map(item => ({
+              name: `${item.name}`,
+              value: item.symbol
+            })).concat([
+              new inquirer.Separator(),
+              { name: 'Enter manually', value: '__manual__' } 
+            ])
+          }
         ]);
 
         let finalBuySymbol = buyChoosenSymbol; 
         if (buyChoosenSymbol === '__manual__') {
-            const { manualSymbol } = await inquirer.prompt([
-                {
-                    type: 'input',
-                    name: 'manualSymbol',
-                    message: 'Enter stock/crypto symbol to buy:' 
-                }
-            ]);
-            finalBuySymbol = manualSymbol;
+          const { manualSymbol } = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'manualSymbol',
+              message: 'Enter stock/crypto symbol to buy:' 
+            }
+          ]);
+          finalBuySymbol = manualSymbol;
+        }
+
+        const priceDataForBuy = await getStockPriceData(finalBuySymbol);
+
+        let currentPriceForBuy = null;
+        if (priceDataForBuy && typeof priceDataForBuy.c === 'number' && typeof priceDataForBuy.pc === 'number') {
+          currentPriceForBuy = priceDataForBuy.c;
+          const previousClose = priceDataForBuy.pc;
+          const diff = currentPriceForBuy - previousClose;
+
+          let colorFunc = chalk.white;
+          if (diff > 0) {
+            colorFunc = chalk.green;
+          } else if (diff < 0) {
+            colorFunc = chalk.red;
+          }
+          console.log(`\nCurrent price of ${finalBuySymbol.toUpperCase()}: ${colorFunc(`$${currentPriceForBuy.toFixed(2)}`)}\n`);
+        } else {
+          console.log(chalk.red('\nCould not fetch current price for this symbol. Cannot proceed with purchase.\n'));
+          break;
+        }
+
+        if (currentPriceForBuy === null) {
+          console.log(chalk.red('Could not determine a valid price for purchase.'));
+          break;
         }
 
         const { amount } = await inquirer.prompt([
-            {
-                type: 'number',
-                name: 'amount',
-                message: `How many units of ${finalBuySymbol.toUpperCase()} do you want to buy?`, 
-                validate: input => input > 0 ? true : 'Enter a positive number.'
-            }
+          {
+            type: 'number',
+            name: 'amount',
+            message: `How many units of ${finalBuySymbol.toUpperCase()} do you want to buy?`, 
+            validate: input => input > 0 ? true : 'Enter a positive number.'
+          }
         ]);
         await buyAsset(finalBuySymbol, amount);
         break;
@@ -162,16 +187,22 @@ async function mainMenu() {
         const sellableChoices = [];
 
         for (const symbol in portfolio.assets) {
-          const units = portfolio.assets[symbol];
-          const priceData = await getStockPriceData(symbol);
+          const asset = portfolio.assets[symbol]; 
+          const units = asset.units;
+
+          if (units <= 0) {
+            continue;
+          }
+
+          const priceDataForSell = await getStockPriceData(symbol);
 
           let priceOutput = 'N/A';
           let colorFunc = chalk.white;
           let currentPrice = null;
 
-          if (priceData && typeof priceData.c === 'number' && typeof priceData.pc === 'number') {
-            currentPrice = priceData.c;
-            const previousClose = priceData.pc;
+          if (priceDataForSell && typeof priceDataForSell.c === 'number' && typeof priceDataForSell.pc === 'number') {
+            currentPrice = priceDataForSell.c;
+            const previousClose = priceDataForSell.pc;
             const diff = currentPrice - previousClose;
 
             if (diff > 0) {
@@ -204,12 +235,12 @@ async function mainMenu() {
           {
             type: 'list',
             name: 'symbol',
-            message: 'Choose an asset to sell:',
+            message: 'Choose an asset to sell:\n',
             choices: sellableChoices
           }
         ]);
         
-        const availableUnits = portfolio.assets[sellChoosenSymbol];
+        const availableUnits = portfolio.assets[sellChoosenSymbol].units;
 
         const { amount: sellAmount } = await inquirer.prompt([
           {
@@ -241,7 +272,6 @@ async function mainMenu() {
         process.exit();
     }
     await mainMenu();
-
   } catch (error) {
     if (error.isTtyError || error.message?.startsWith('User force closed the prompt')) {
       console.log('\nApplication closed.');

@@ -1,6 +1,10 @@
 {
-  "balance": 4663.06,
+  "balance": 3665.2599999999998,
   "assets": {
-    "GOOGL": 2
+    "BINANCE:SOLUSDT": {
+      "units": 4,
+      "avgPrice": 176.92000000000002
+    },
+    "META": null
   }
 }
