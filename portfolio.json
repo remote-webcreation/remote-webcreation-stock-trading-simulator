@@ -1,10 +1,9 @@
 {
-  "balance": 3665.2599999999998,
+  "balance": 3590.26,
   "assets": {
-    "BINANCE:SOLUSDT": {
+    "AAPL": {
       "units": 4,
-      "avgPrice": 176.92000000000002
-    },
-    "META": null
+      "avgPrice": 195.27
+    }
   }
 }
