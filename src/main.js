@@ -51,7 +51,7 @@ async function mainMenu() {
             {
               type: 'list',
               name: 'symbol',
-              message: 'Choose a symbol:',
+              message: 'Choose a symbol:\n',
               choices: showCategory.symbols.map(item => ({
                 name: `${item.name}`,
                 value: item.symbol
@@ -80,15 +80,31 @@ async function mainMenu() {
 
 
         if (priceData && typeof priceData.c === 'number' && typeof priceData.pc === 'number') {
-            const diff = priceData.c - priceData.pc;
-            let colorFunc = chalk.white;
-            if (diff > 0) colorFunc = chalk.green;
-            else if (diff < 0) colorFunc = chalk.red;
-            console.log(
-                `\nCurrent price of ${finalShowSymbol.toUpperCase()}: ${colorFunc(`$${priceData.c}`)}\n`
-            );
+          const currentPrice = priceData.c;
+          const previousClose = priceData.pc; 
+          const diff = currentPrice - previousClose; 
+            
+          let percentageChange = 0;
+          if (previousClose !== 0) { 
+            percentageChange = (diff / previousClose) * 100;
+          }
+
+          let colorFunc = chalk.white;
+          let sign = '';
+
+          if (diff > 0) {
+            colorFunc = chalk.green;
+            sign = '+'; 
+          } else if (diff < 0) {
+            colorFunc = chalk.red;
+            sign = ''; 
+          }
+            
+          console.log(
+            `\nCurrent price of ${finalShowSymbol.toUpperCase()}: ${colorFunc(`$${currentPrice.toFixed(2)}`)} ${colorFunc(`(${sign}${percentageChange.toFixed(2)}%)`)}\n`
+          );
         } else {
-            console.log('\nCould not fetch price. Try another symbol.\n');
+          console.log('\nCould not fetch price. Try another symbol.\n');
         }
         break;
 
@@ -116,7 +132,7 @@ async function mainMenu() {
           {
             type: 'list',
             name: 'symbol',
-            message: 'Choose a symbol to buy:', 
+            message: 'Choose a symbol to buy:\n', 
             choices: buyCategory.symbols.map(item => ({
               name: `${item.name}`,
               value: item.symbol
@@ -213,7 +229,7 @@ async function mainMenu() {
             priceOutput = `$${currentPrice.toFixed(2)}`;
           }
 
-          console.log(`- ${symbol}: ${units} units | Current Price: ${colorFunc(priceOutput)}`);
+          console.log(`- ${symbol}: ${units} units | Current Price: ${colorFunc(priceOutput)}\n`);
 
           if (currentPrice !== null) {
             sellableChoices.push({

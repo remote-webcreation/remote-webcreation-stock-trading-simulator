@@ -1,9 +1,10 @@
 {
-  "balance": 3590.26,
+  "balance": 3785.53,
   "assets": {
     "AAPL": {
-      "units": 4,
+      "units": 3,
       "avgPrice": 195.27
     }
-  }
+  },
+  "initialBalance": 5000
 }
