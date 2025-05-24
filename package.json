@@ -1,0 +1,25 @@
+{
+  "name": "remote-webcreation-stock-trading-simulator",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/remote-webcreation/remote-webcreation-stock-trading-simulator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/remote-webcreation/remote-webcreation-stock-trading-simulator/issues"
+  },
+  "homepage": "https://github.com/remote-webcreation/remote-webcreation-stock-trading-simulator#readme",
+  "description": "",
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "inquirer": "^12.6.2"
+  }
+}
