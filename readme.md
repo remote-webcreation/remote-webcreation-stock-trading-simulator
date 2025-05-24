@@ -13,7 +13,7 @@ A simple terminal-based stock trading simulator built with Node.js and JavaScrip
 
 1. **Clone this repo:**
     ```bash
-    git clone git@github.com:remote-webcreation/terminal-stock-trading-simulator.git
+    git clone git@github.com:remote-webcreation/remote-webcreation-stock-trading-simulator.git
     cd terminal-stock-sim
     ```
 
@@ -24,7 +24,7 @@ A simple terminal-based stock trading simulator built with Node.js and JavaScrip
 
 3. **Get a free API key for stock data:**
     - Register at [Finnhub](https://finnhub.io/)
-    - Set your API key in `src/api.js` (look for the comment in the file!)
+    - Set your API key in `src/api.js`
 
 4. **Start the app:**
     ```bash

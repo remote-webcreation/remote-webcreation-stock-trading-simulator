@@ -38,20 +38,20 @@ async function mainMenu() {
         ]);
 
         // find category with name
-        const category = categories.find(cat => cat.name === categoryName);
+        const showCategory = categories.find(cat => cat.name === showCategoryName);
 
-        if (!category.symbols || category.symbols.length === 0) {
+        if (!showCategory.symbols || showCategory.symbols.length === 0) {
             console.log('\nNo symbols available in this category.\n');
             break;
         }
 
         //choose symbol
-        const { symbol: choosenSymbol } = await inquirer.prompt([
+        const { symbol: showChoosenSymbol } = await inquirer.prompt([
             {
                 type: 'list',
                 name: 'symbol',
                 message: 'Choose a symbol:',
-                choices: category.symbols.map(item => ({
+                choices: showCategory.symbols.map(item => ({
                     name: `${item.name} (${item.symbol})`,
                     value: item.symbol
                 })).concat([
@@ -62,8 +62,8 @@ async function mainMenu() {
         ]);
 
         // manual input
-        let finalSymbol = choosenSymbol;
-        if (choosenSymbol === '__manual__') {
+        let finalSymbol = showChoosenSymbol;
+        if (showChoosenSymbol === '__manual__') {
             const { manualSymbol } = await inquirer.prompt([
                 {
                     type: 'input',
@@ -71,11 +71,11 @@ async function mainMenu() {
                     message: 'Enter stock/crypto symbol:'
                 }
             ]);
-            finalSymbol = manualSymbol;
+            finalShowSymbol = manualSymbol;
         }
 
         // request price
-        const priceData = await getStockPriceData(finalSymbol);
+        const priceData = await getStockPriceData(finalShowSymbol);
 
 
         if (priceData && typeof priceData.c === 'number' && typeof priceData.pc === 'number') {
@@ -93,28 +93,67 @@ async function mainMenu() {
       case 'Buy stock':
 
       // choose category
-        const { buySymbol, amount } = await inquirer.prompt([
+        const { categoryName: buyCategoryName } = await inquirer.prompt([
             {
-                type: 'input',
-                name: 'buySymbol',
-                message: 'Enter the symbol you want to buy:'
+                type: 'list',
+                name: 'categoryName',
+                message: 'Choose a category to buy from:',
+                choices: categories.map(cat => cat.name)
             },
+        ]);
+        
+        const buyCategory = categories.find(cat => cat.name === buyCategoryName);
+
+        if (!buyCategory.symbols || buyCategory.symbols.length === 0) {
+            console.log('\nNo symbols available in this category to buy.\n'); 
+            break; 
+        }
+
+        const { symbol: buyChoosenSymbol } = await inquirer.prompt([ 
+            {
+                type: 'list',
+                name: 'symbol',
+                message: 'Choose a symbol to buy:', 
+                choices: buyCategory.symbols.map(item => ({
+                    name: `${item.name} (${item.symbol})`,
+                    value: item.symbol
+                })).concat([
+                    new inquirer.Separator(),
+                    { name: 'Enter manually', value: '__manual__' } 
+                ])
+            }
+        ]);
+
+        let finalBuySymbol = buyChoosenSymbol; 
+        if (buyChoosenSymbol === '__manual__') {
+            const { manualSymbol } = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'manualSymbol',
+                    message: 'Enter stock/crypto symbol to buy:' 
+                }
+            ]);
+            finalBuySymbol = manualSymbol;
+        }
+
+        const { amount } = await inquirer.prompt([
             {
                 type: 'number',
                 name: 'amount',
-                message: 'How many units do you want to buy?',
+                message: `How many units of ${finalBuySymbol.toUpperCase()} do you want to buy?`, // Dynamische Nachricht
                 validate: input => input > 0 ? true : 'Enter a positive number.'
             }
         ]);
-        await buyAsset(buySymbol, amount);
+        await buyAsset(finalBuySymbol, amount);
         break;
+
       case 'Sell stock':
         console.log("Feature coming soon!\n");
         break;
       case 'Portfolio':
         await showPortfolio();
         break;
-      case 'Show history':
+      case 'History':
         console.log("Feature coming soon!\n");
         break;
       case 'Exit':
