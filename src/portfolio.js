@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'fs/promises';
 import { getStockPriceData } from './api.js';
+import chalk from 'chalk';
 
 const FILE = './portfolio.json';
 const INITIAL_BALANCE = 5000;
@@ -10,8 +11,13 @@ export async function loadPortfolio() {
         const data = await readFile(FILE, 'utf-8');
         const portfolio = JSON.parse(data);
 
+        // Ensure balance exists and is initialized
         if (typeof portfolio.balance !== 'number' || portfolio.balance < 0) {
             portfolio.balance = INITIAL_BALANCE;
+        }
+        // Ensure assets exist as an object
+        if (typeof portfolio.assets !== 'object' || portfolio.assets === null) {
+            portfolio.assets = {};
         }
         return portfolio;
     } catch (error) {
@@ -52,10 +58,11 @@ export async function buyAsset(symbol, amount) {
         console.log(`\nNot enough credit. You've got ${portfolio.balance.toFixed(2)} €, but you need ${cost.toFixed(2)} €.\n`);
         return;
     }
-
+    // Update balance
     portfolio.balance -= cost;
+
     if (!portfolio.assets[upperSymbol]) {
-        portfolio.assets[upperSymbol] = 0;
+        portfolio.assets[upperSymbol] = 0; // speichert nur die Menge
     }
     portfolio.assets[upperSymbol] += amount;
 
@@ -69,15 +76,37 @@ export async function showPortfolio() {
     const portfolio = await loadPortfolio();
 
     console.log('\n--- Your Portfolio ---\n');
-    console.log(`Available Balance: ${portfolio.balance.toFixed(2)} €\n`);
+    console.log(`-> Available Balance: ${portfolio.balance.toFixed(2)} €\n`);
+    console.log('--------------------\n');
 
-    if (Object.keys(portfolio).length === 0) {
+    if (Object.keys(portfolio.assets || {}).length === 0) {
         console.log('\nYour portfolio is empty (no assets owned).\n');
+        console.log('--------------------\n');
         return;
     }
-    console.log('Your Assets:');
+
+    console.log('Your Assets:\n');
     for (const symbol in portfolio.assets) {
-        console.log(`- ${symbol}: ${portfolio.assets[symbol]} units`);
+        const units = portfolio.assets[symbol];
+
+        const priceData = await getStockPriceData(symbol);
+
+        let priceOutput = 'N/A';
+        let colorFunc = chalk.white;
+
+        if (priceData && typeof priceData.c === 'number' && typeof priceData.pc === 'number') {
+                const currentPrice = priceData.c;
+                const previousClose = priceData.pc;
+                const diff = currentPrice - previousClose;
+
+            if (diff > 0) {
+                colorFunc = chalk.green;
+            } else if (diff < 0) {
+                colorFunc = chalk.red;
+            }
+            priceOutput = `$${currentPrice.toFixed(2)}`;
+        }
+        console.log(`- ${symbol}: ${units} units | Current Price: ${colorFunc(priceOutput)}`);
     }
-    console.log('--------------------\n');
+    console.log('\n--------------------\n');
 }

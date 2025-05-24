@@ -26,9 +26,10 @@ async function mainMenu() {
     ]);
 
     switch (action) {
+        
       case 'Show stock price':
 
-        const { categoryName } = await inquirer.prompt([
+        const { categoryName: showCategoryName } = await inquirer.prompt([
           {
             type: 'list',
             name: 'categoryName',
@@ -52,7 +53,7 @@ async function mainMenu() {
                 name: 'symbol',
                 message: 'Choose a symbol:',
                 choices: showCategory.symbols.map(item => ({
-                    name: `${item.name} (${item.symbol})`,
+                    name: `${item.name}`,
                     value: item.symbol
                 })).concat([
                     new inquirer.Separator(),
@@ -62,7 +63,7 @@ async function mainMenu() {
         ]);
 
         // manual input
-        let finalSymbol = showChoosenSymbol;
+        let finalShowSymbol = showChoosenSymbol;
         if (showChoosenSymbol === '__manual__') {
             const { manualSymbol } = await inquirer.prompt([
                 {
@@ -84,12 +85,14 @@ async function mainMenu() {
             if (diff > 0) colorFunc = chalk.green;
             else if (diff < 0) colorFunc = chalk.red;
             console.log(
-                `\nCurrent price of ${finalSymbol.toUpperCase()}: ${colorFunc(`$${priceData.c}`)}`
+                `\nCurrent price of ${finalShowSymbol.toUpperCase()}: ${colorFunc(`$${priceData.c}`)}\n`
             );
         } else {
             console.log('\nCould not fetch price. Try another symbol.\n');
         }
         break;
+
+
       case 'Buy stock':
 
       // choose category
@@ -115,7 +118,7 @@ async function mainMenu() {
                 name: 'symbol',
                 message: 'Choose a symbol to buy:', 
                 choices: buyCategory.symbols.map(item => ({
-                    name: `${item.name} (${item.symbol})`,
+                    name: `${item.name}`,
                     value: item.symbol
                 })).concat([
                     new inquirer.Separator(),
@@ -140,7 +143,7 @@ async function mainMenu() {
             {
                 type: 'number',
                 name: 'amount',
-                message: `How many units of ${finalBuySymbol.toUpperCase()} do you want to buy?`, // Dynamische Nachricht
+                message: `How many units of ${finalBuySymbol.toUpperCase()} do you want to buy?`, 
                 validate: input => input > 0 ? true : 'Enter a positive number.'
             }
         ]);
